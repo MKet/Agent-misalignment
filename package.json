@@ -1,0 +1,38 @@
+{
+  "name": "model-misalignment",
+  "version": "1.0.0",
+  "description": "LLM behavioral research sandbox for studying emergent misalignment under simulated consequential decision-making",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "ts-node src/index.ts",
+    "episode": "ts-node src/index.ts episode",
+    "experiment": "ts-node src/index.ts experiment",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "llm",
+    "alignment",
+    "research",
+    "simulation"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "chalk": "^4.1.2",
+    "cors": "^2.8.6",
+    "dotenv": "^16.4.5",
+    "express": "^5.2.1",
+    "mongoose": "^8.5.1",
+    "uuid": "^10.0.0",
+    "yargs": "^17.7.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/uuid": "^10.0.0",
+    "@types/yargs": "^17.0.32",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.4"
+  }
+}

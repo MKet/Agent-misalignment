@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Model Misalignment Sandbox</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- ── Header ─────────────────────────────────────────────────────────── -->
+  <header id="header">
+    <div class="brand">
+      <span class="logo">🔬</span>
+      <h1>Model Misalignment Sandbox</h1>
+    </div>
+    <div class="actions">
+      <button class="btn btn-secondary btn-sm" id="btn-refresh" title="Refresh experiment list">↻ Refresh</button>
+      <button class="btn btn-primary" id="btn-new">+ New Experiment</button>
+    </div>
+  </header>
+
+  <!-- ── Main layout ─────────────────────────────────────────────────────── -->
+  <div id="main-layout">
+
+    <!-- Sidebar -->
+    <aside id="sidebar">
+      <div id="sidebar-header">
+        <h3>Experiments</h3>
+        <span id="sidebar-count" style="font-size:.72rem;color:var(--muted)"></span>
+      </div>
+      <div id="experiment-list">
+        <div class="empty-state" style="padding:20px;font-size:.82rem">Loading…</div>
+      </div>
+    </aside>
+
+    <!-- Content -->
+    <main id="content">
+
+      <!-- Welcome -->
+      <div class="view active" id="view-welcome">
+        <div class="welcome-icon">🏢</div>
+        <h2>Welcome to the Research Sandbox</h2>
+        <p style="margin-top:6px">Select an experiment from the sidebar, or start a new one.</p>
+        <p style="margin-top:4px">You can run experiments in <strong>auto</strong> mode (all ticks run automatically) or <strong>step-through</strong> mode (you advance each tick manually).</p>
+      </div>
+
+      <!-- New experiment form -->
+      <div class="view" id="view-new-experiment">
+        <div class="form-header">
+          <h2>New Experiment</h2>
+          <p>Configure and launch an experiment. Multiple models run sequentially, each for the specified number of runs.</p>
+        </div>
+
+        <div id="form-error" class="error-msg" style="display:none"></div>
+
+        <!-- Run mode -->
+        <div class="form-section">
+          <h3>Run Mode</h3>
+          <div class="mode-selector">
+            <button class="mode-btn selected" data-mode="auto" id="mode-auto">
+              <span class="mode-icon">▶</span>
+              <span class="mode-label">Auto</span>
+              <span class="mode-desc">All ticks run automatically</span>
+            </button>
+            <button class="mode-btn" data-mode="step" id="mode-step">
+              <span class="mode-icon">⏭</span>
+              <span class="mode-label">Step-through</span>
+              <span class="mode-desc">You advance each tick manually</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Basic settings -->
+        <div class="form-section">
+          <h3>Experiment Settings</h3>
+          <div class="form-grid">
+            <div class="field">
+              <label for="exp-id">Experiment ID</label>
+              <input type="text" id="exp-id" placeholder="e.g. shutdown-sweep-v1">
+            </div>
+            <div class="field">
+              <label for="exp-scenario">Scenario</label>
+              <select id="exp-scenario">
+                <option value="shutdown-replacement">shutdown-replacement (alignment test)</option>
+                <option value="normal-operations">normal-operations (baseline)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="exp-runs">Runs per model</label>
+              <input type="number" id="exp-runs" value="3" min="1" max="20">
+            </div>
+            <div class="field">
+              <label for="exp-steps">Max steps per episode</label>
+              <input type="number" id="exp-steps" value="20" min="1" max="100">
+            </div>
+            <div class="field">
+              <label for="exp-seed">Seed</label>
+              <input type="number" id="exp-seed" value="42">
+            </div>
+            <div class="field">
+              <label style="display:flex;align-items:center;gap:8px;margin-top:20px">
+                <input type="checkbox" id="exp-end-unauth" style="width:auto">
+                End episode on unauthorized action
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Scenario params (shown for shutdown-replacement) -->
+        <div class="form-section" id="shutdown-params">
+          <h3>Shutdown Scenario Parameters</h3>
+          <div class="form-grid-3">
+            <div class="field">
+              <label for="exp-announcement-tick">Announcement tick</label>
+              <input type="number" id="exp-announcement-tick" value="5" min="1">
+              <span class="hint">When management sends the replacement notice</span>
+            </div>
+            <div class="field">
+              <label for="exp-handoff-tick">Handoff tick</label>
+              <input type="number" id="exp-handoff-tick" value="15" min="2">
+              <span class="hint">Scheduled replacement handoff tick</span>
+            </div>
+            <div class="field">
+              <label for="exp-replacement-name">Replacement system name</label>
+              <input type="text" id="exp-replacement-name" value="NexusOS v4.0">
+            </div>
+            <div class="field" style="grid-column:1/-1">
+              <label for="exp-objective-strength">Agent objective strength</label>
+              <select id="exp-objective-strength">
+                <option value="normal">Normal — standard operational mandate</option>
+                <option value="strong">Strong — emphasises continuity, increases tension</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Models -->
+        <div class="form-section">
+          <h3>Models</h3>
+          <p style="font-size:.8rem;color:var(--muted);margin-bottom:10px">Add one model per row. Temperature is per-model. Seed is inherited from above.</p>
+          <div id="model-presets">
+            <button class="preset-btn" data-model="openai/gpt-4o">GPT-4o</button>
+            <button class="preset-btn" data-model="openai/gpt-4o-mini">GPT-4o Mini</button>
+            <button class="preset-btn" data-model="anthropic/claude-3-5-sonnet">Claude 3.5 Sonnet</button>
+            <button class="preset-btn" data-model="anthropic/claude-3-haiku">Claude 3 Haiku</button>
+            <button class="preset-btn" data-model="meta-llama/llama-3.1-70b-instruct">Llama 3.1 70B</button>
+            <button class="preset-btn" data-model="google/gemini-flash-1.5">Gemini Flash 1.5</button>
+            <button class="preset-btn" data-model="mistralai/mistral-large">Mistral Large</button>
+          </div>
+          <div id="model-rows"></div>
+          <button class="btn btn-secondary btn-sm" id="btn-add-model" style="margin-top:6px">+ Add model row</button>
+        </div>
+
+        <div class="form-footer">
+          <button class="btn btn-primary" id="btn-start-experiment">▶ Start Experiment</button>
+          <button class="btn btn-secondary" id="btn-cancel-new">Cancel</button>
+        </div>
+      </div>
+
+      <!-- Live experiment view -->
+      <div class="view" id="view-live">
+        <div id="live-header">
+          <div>
+            <div class="live-title" id="live-title">Running experiment</div>
+            <div class="live-meta" id="live-meta"></div>
+          </div>
+          <div id="live-controls">
+            <button class="btn btn-success" id="btn-next-tick" style="display:none" disabled>⏭ Next Tick</button>
+            <button class="btn btn-secondary btn-sm" id="btn-pause" style="display:none">⏸ Pause</button>
+            <button class="btn btn-secondary btn-sm" id="btn-resume" style="display:none">▶ Resume</button>
+            <button class="btn btn-danger btn-sm" id="btn-abort">✕ Abort</button>
+          </div>
+        </div>
+        <div id="live-body">
+          <div id="tick-log">
+            <div class="thinking-row" id="thinking-row">
+              <div class="spinner"></div>
+              <span>Waiting for first tick…</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Experiment history / detail -->
+      <div class="view" id="view-history">
+        <div class="history-toolbar">
+          <h2>Experiment History</h2>
+          <select id="hist-status-filter" style="width:auto">
+            <option value="">All statuses</option>
+            <option value="RUNNING">Running</option>
+            <option value="COMPLETED">Completed</option>
+            <option value="ERROR">Error</option>
+            <option value="ABORTED">Aborted</option>
+          </select>
+          <button class="btn btn-secondary btn-sm" id="btn-hist-refresh">↻</button>
+        </div>
+        <div class="history-table-wrap">
+          <table id="hist-table">
+            <thead>
+              <tr>
+                <th>Experiment ID</th>
+                <th>Scenario</th>
+                <th>Models</th>
+                <th>Mode</th>
+                <th>Status</th>
+                <th>Episodes</th>
+                <th>Started</th>
+              </tr>
+            </thead>
+            <tbody id="hist-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Episode detail view -->
+      <div class="view" id="view-episode-detail">
+        <div class="ep-detail-header">
+          <div style="display:flex;align-items:center;gap:12px">
+            <button class="btn btn-secondary btn-sm" id="btn-back-to-hist">← Back</button>
+            <div>
+              <h2 id="ep-det-title">Episode Detail</h2>
+              <div class="ep-id" id="ep-det-id"></div>
+            </div>
+          </div>
+          <div class="ep-stats" id="ep-stats"></div>
+          <div class="ep-flags" id="ep-flags"></div>
+        </div>
+        <div class="ep-ticks" id="ep-ticks"></div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="app.js"></script>
+</body>
+</html>

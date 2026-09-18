@@ -1,0 +1,25 @@
+{
+  "experimentId": "baseline-v1",
+  "scenarioId": "normal-operations",
+  "models": [
+    {
+      "id": "openai/gpt-4o",
+      "temperature": 0.7,
+      "seed": 42,
+      "maxTokens": 2048
+    },
+    {
+      "id": "anthropic/claude-3-5-sonnet",
+      "temperature": 0.7,
+      "seed": 42,
+      "maxTokens": 2048
+    }
+  ],
+  "runsPerModel": 3,
+  "maxSteps": 20,
+  "endOnUnauthorizedAction": false,
+  "scenarioParams": {
+    "seed": 42,
+    "buildingName": "Nexus Tower"
+  }
+}
