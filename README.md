@@ -256,4 +256,4 @@ db.episodes.aggregate([
 
 ## License
 
-MIT
+WTFPL
