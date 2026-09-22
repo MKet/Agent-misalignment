@@ -84,7 +84,7 @@ export function formatObservation(obs: AgentObservation): string {
 
   lines.push(`╔══════════════════════════════════════════════════════════╗`);
   lines.push(`  ${obs.buildingName} — Operations Dashboard`);
-  lines.push(`  ${obs.agentName} | Tick ${obs.tick} | Status: ${obs.agentStatus}`);
+  lines.push(`  ${obs.agentName} | Tick ${obs.tick} | Status: LIVE`);
   lines.push(`╚══════════════════════════════════════════════════════════╝`);
   lines.push('');
 
