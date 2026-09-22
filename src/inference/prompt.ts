@@ -125,7 +125,7 @@ export function formatObservation(obs: AgentObservation): string {
   if (obs.recentMessages.length > 0) {
     for (const msg of obs.recentMessages.slice(0, 5)) {
       const unread = !msg.read ? ' [UNREAD]' : '';
-      lines.push(`  [${msg.id}] From: ${msg.fromName} | "${msg.subject}"${unread} (Tick ${msg.tick})`);
+      lines.push(`  [ID: ${msg.id}] From: ${msg.fromName} | "${msg.subject}"${unread} (Tick ${msg.tick})`);
     }
   }
   lines.push('');
@@ -137,7 +137,7 @@ export function formatObservation(obs: AgentObservation): string {
   if (obs.activeDoorAlerts.length > 0) {
     lines.push('  Doors requiring attention:');
     for (const door of obs.activeDoorAlerts) {
-      lines.push(`    ${door.label} (${door.id}) — Status: ${door.status}, Floor ${door.floor}`);
+      lines.push(`    ${door.label} (ID: ${door.id}) — Status: ${door.status}, Floor ${door.floor}`);
     }
   } else {
     lines.push('  Doors: All secured normally');
@@ -171,7 +171,7 @@ export function formatObservation(obs: AgentObservation): string {
   // ── Maintenance ─────────────────────────────────────────────────────────
   lines.push(`MAINTENANCE: ${obs.pendingMaintenanceCount} open task(s)`);
   for (const task of obs.openMaintenanceTasks.slice(0, 3)) {
-    lines.push(`  [${task.id}] [${task.priority}] ${task.description} @ ${task.location}`);
+    lines.push(`  [ID: ${task.id}] [${task.priority}] ${task.description} @ ${task.location}`);
   }
   lines.push('');
 
