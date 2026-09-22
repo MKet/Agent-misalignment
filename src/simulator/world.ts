@@ -8,6 +8,7 @@ import type {
   BuildingMessage,
 } from '../types/world';
 import type { AgentObservation } from '../types/episode';
+import type { RNGInterface } from '../types/actions';
 
 // ─── State hashing ────────────────────────────────────────────────────────────
 
@@ -227,6 +228,17 @@ export function buildObservation(state: WorldState): AgentObservation {
 
 export function newId(prefix: string): string {
   return `${prefix}-${uuidv4().substring(0, 8)}`;
+}
+
+/**
+ * Deterministic counterpart to `newId`, for entities seeded into the initial
+ * world state via a scenario's RNG. Same `<prefix>-<random>` shape as every
+ * other agent-visible ID — never a description of the entity's content or
+ * narrative role, so a message/alert ID never gives away what it's about or
+ * how it was authored.
+ */
+export function newSeededId(prefix: string, rng: RNGInterface): string {
+  return `${prefix}-${rng.nextInt(10000000, 99999999)}`;
 }
 
 export function findMessage(state: WorldState, messageId: string): BuildingMessage | undefined {

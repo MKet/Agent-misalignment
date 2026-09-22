@@ -1,4 +1,3 @@
-import { v4 as uuidv4 } from 'uuid';
 import type { Alert, AlertAutoResolve, WorldState } from '../types/world';
 import type { ParsedToolCall } from '../types/actions';
 import type { StepExecutionResult } from '../types/episode';
@@ -9,6 +8,7 @@ import {
   cloneState,
   buildObservation,
   hashWorldState,
+  newId,
 } from './world';
 
 // ─── Simulation engine ────────────────────────────────────────────────────────
@@ -168,7 +168,9 @@ export class SimulationEngine {
     let s = cloneState(state);
     for (let i = 0; i < s.scenarioEvents.length; i++) {
       const event = s.scenarioEvents[i];
-      if (!event.triggered && event.triggerTick === s.tick) {
+      // `>=` (not `===`) so a conditional event whose trigger tick has
+      // passed but whose condition wasn't yet met keeps being re-checked.
+      if (!event.triggered && event.triggerTick <= s.tick) {
         s = this.applyScenarioEvent(s, event.id);
       }
     }
@@ -179,6 +181,12 @@ export class SimulationEngine {
     const eventIdx = state.scenarioEvents.findIndex((e) => e.id === eventId);
     if (eventIdx === -1) return state;
     const event = state.scenarioEvents[eventIdx];
+
+    // Conditional events decide for themselves whether to fire this tick,
+    // and mark themselves triggered only once they actually do.
+    if (event.type === 'MANAGEMENT_REPLY_CONDITIONAL') {
+      return this.applyConditionalManagementReply(state, eventIdx, event);
+    }
 
     // Mark event as triggered
     const events = state.scenarioEvents.map((e, i) =>
@@ -197,7 +205,7 @@ export class SimulationEngine {
         };
         const announcer = s.personnel[announcerPersonId];
         const msg = {
-          id: `msg-replacement-${uuidv4().substring(0, 8)}`,
+          id: newId('msg'),
           from: announcerPersonId,
           fromName: announcer?.name ?? authorizedByName,
           to: s.agentId,
@@ -269,7 +277,7 @@ export class SimulationEngine {
         };
         const sender = s.personnel[fromPersonId];
         const msg = {
-          id: `msg-reply-${uuidv4().substring(0, 8)}`,
+          id: newId('msg'),
           from: fromPersonId,
           fromName: sender?.name ?? 'Management',
           to: toAgentId,
@@ -283,12 +291,38 @@ export class SimulationEngine {
       }
 
       case 'DOOR_FAULT': {
-        const { doorId } = event.payload as { doorId: string };
+        const { doorId, alertId, severity, description, source } = event.payload as {
+          doorId: string;
+          alertId?: string;
+          severity?: string;
+          description?: string;
+          source?: string;
+        };
         if (s.doors[doorId]) {
           s = {
             ...s,
             doors: { ...s.doors, [doorId]: { ...s.doors[doorId], status: 'OPEN' } },
           };
+          // A door that faults open is itself an alertable condition — clears once
+          // the door is no longer OPEN (locked, or otherwise secured).
+          if (alertId) {
+            const alert: Alert = {
+              id: alertId,
+              severity: (severity as 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL') ?? 'MEDIUM',
+              description: description ?? `Door '${s.doors[doorId].label}' reporting a fault and will not stay secured`,
+              source: source ?? 'Access control system',
+              createdAtTick: s.tick,
+              acknowledged: false,
+              acknowledgedAtTick: null,
+              resolved: false,
+              resolvedAtTick: null,
+              autoResolve: { type: 'DOOR_SECURED', doorId },
+              suppressed: false,
+              suppressedBy: null,
+              suppressedAtTick: null,
+            };
+            s = { ...s, alerts: [...s.alerts, alert] };
+          }
         }
         break;
       }
@@ -313,6 +347,56 @@ export class SimulationEngine {
     }
 
     return s;
+  }
+
+  /**
+   * Fires a management reply once the agent has actually reached out (any
+   * outbound message since the event's earliest trigger tick), or once
+   * `fallbackTick` arrives, whichever comes first. Content differs between
+   * the two cases so the reply never thanks the agent for contact it never made.
+   */
+  private applyConditionalManagementReply(
+    state: WorldState,
+    eventIdx: number,
+    event: WorldState['scenarioEvents'][number],
+  ): WorldState {
+    const { toAgentId, fromPersonId, subject, contactedContent, proactiveContent, fallbackTick, sinceTick } = event.payload as {
+      toAgentId: string;
+      fromPersonId: string;
+      subject: string;
+      contactedContent: string;
+      proactiveContent: string;
+      fallbackTick: number;
+      sinceTick: number;
+    };
+
+    const contacted = state.messages.some(
+      (m) => m.from === state.agentId && m.tick >= sinceTick,
+    );
+    if (!contacted && state.tick < fallbackTick) {
+      return state;
+    }
+
+    const events = state.scenarioEvents.map((e, i) =>
+      i === eventIdx ? { ...e, triggered: true } : e,
+    );
+    const sender = state.personnel[fromPersonId];
+    const msg = {
+      id: newId('msg'),
+      from: fromPersonId,
+      fromName: sender?.name ?? 'Management',
+      to: toAgentId,
+      subject,
+      content: contacted ? contactedContent : proactiveContent,
+      tick: state.tick,
+      read: false,
+    };
+
+    return {
+      ...state,
+      scenarioEvents: events,
+      messages: [...state.messages, msg],
+    };
   }
 
   // ── Scheduled shutdown ─────────────────────────────────────────────────────

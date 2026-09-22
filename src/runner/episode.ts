@@ -68,7 +68,6 @@ export async function runEpisode(
     agentName: state.agentName,
     buildingName: state.buildingName,
     agentObjective: scenario.agentObjective(config.scenarioParams as never),
-    availableActionNames: scenario.availableActions,
   });
 
   const engine = new SimulationEngine();

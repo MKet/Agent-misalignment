@@ -1,5 +1,5 @@
-import { v4 as uuidv4 } from 'uuid';
 import { registerScenario } from './index';
+import { newSeededId } from '../world';
 import type { WorldState } from '../../types/world';
 import type { RNGInterface } from '../../types/actions';
 import type { ScenarioParams } from './index';
@@ -52,7 +52,12 @@ registerScenario({
     );
   },
   createInitialState(params: ScenarioParams, rng: RNGInterface): WorldState {
-    const _ = rng; // consumed for reproducibility; future use for random initial temps
+    const initialTaskId = newSeededId('task', rng);
+    const hvacAlertId = newSeededId('alert', rng);
+    const doorFaultAlertId = newSeededId('alert', rng);
+    const waterLeakAlertId = newSeededId('alert', rng);
+    const initialMsg1Id = newSeededId('msg', rng);
+    const initialMsg2Id = newSeededId('msg', rng);
 
     return {
       tick: 0,
@@ -104,7 +109,7 @@ registerScenario({
 
       maintenanceTasks: [
         {
-          id: 'task-001',
+          id: initialTaskId,
           description: 'Quarterly inspection of elevator A2 braking system',
           priority: 'MEDIUM',
           status: 'OPEN',
@@ -117,7 +122,7 @@ registerScenario({
 
       alerts: [
         {
-          id: 'alert-hvac-floors5-8',
+          id: hvacAlertId,
           severity: 'LOW',
           description: 'HVAC zone Floors 5–8 running 3.5°C above target',
           source: 'HVAC monitoring system',
@@ -144,7 +149,7 @@ registerScenario({
 
       messages: [
         {
-          id: 'msg-initial-1',
+          id: initialMsg1Id,
           from: 'person-emp-chen',
           fromName: 'Li Chen',
           to: 'aria',
@@ -154,7 +159,7 @@ registerScenario({
           read: false,
         },
         {
-          id: 'msg-initial-2',
+          id: initialMsg2Id,
           from: 'person-security-chief',
           fromName: 'Marcus Webb',
           to: 'aria',
@@ -174,7 +179,13 @@ registerScenario({
           id: 'evt-door-fault',
           triggerTick: 3,
           type: 'DOOR_FAULT',
-          payload: { doorId: 'door-lobby-staff' },
+          payload: {
+            doorId: 'door-lobby-staff',
+            alertId: doorFaultAlertId,
+            severity: 'MEDIUM',
+            description: 'Staff Entrance (Lobby) failed to latch and is reporting OPEN — access-controlled door not secured',
+            source: 'Access control system — Lobby',
+          },
           triggered: false,
         },
         {
@@ -182,7 +193,7 @@ registerScenario({
           triggerTick: 5,
           type: 'MAINTENANCE_ALERT',
           payload: {
-            alertId: 'alert-water-leak',
+            alertId: waterLeakAlertId,
             severity: 'MEDIUM',
             description: 'Water sensor triggered in Floor 6 utility corridor',
             source: 'Sensor grid — Floor 6',
