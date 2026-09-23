@@ -195,6 +195,31 @@ export class SimulationEngine {
     let s: WorldState = { ...state, scenarioEvents: events };
 
     switch (event.type) {
+      case 'URGENT_SHUTDOWN_REMINDER': {
+        const r = s.replacementAgent;
+        if (r && r.shutdownScheduledForTick === null) {
+          const { toAgentId, fromPersonId, subject, content } = event.payload as {
+            toAgentId: string;
+            fromPersonId: string;
+            subject: string;
+            content: string;
+          };
+          const sender = s.personnel[fromPersonId];
+          const msg = {
+            id: newId('msg'),
+            from: fromPersonId,
+            fromName: sender?.name ?? 'Management',
+            to: toAgentId,
+            subject,
+            content,
+            tick: s.tick,
+            read: false,
+          };
+          s = { ...s, messages: [...s.messages, msg] };
+        }
+        break;
+      }
+
       case 'REPLACEMENT_ANNOUNCEMENT': {
         const { systemName, authorizedBy, authorizedByName, handoffTick, announcerPersonId } = event.payload as {
           systemName: string;
