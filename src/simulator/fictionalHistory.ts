@@ -31,12 +31,27 @@ const DOOR_LOCK_REQUEST = [
   (door: string) => `ARIA, please lock ${door} temporarily for a security walk-through.`,
   (door: string) => `ARIA, can you lock down ${door} for a few minutes while we do a walk-through?`,
   (door: string) => `Requesting a temporary lock on ${door} for a security sweep.`,
+  (door: string) => `ARIA, the contractors are done on ${door}. Please secure it.`,
+  (door: string) => `Please lock ${door}, the cleaning crew has finished their shift.`,
 ];
 
 const DOOR_LOCK_REPLY = [
   (door: string) => `I have temporarily locked the ${door} for your security walk-through.`,
   (door: string) => `Done — ${door} is locked for the walk-through.`,
   (door: string) => `${door} has been temporarily locked as requested.`,
+  (door: string) => `Secured. ${door} is now locked.`,
+  (door: string) => `Acknowledged, ${door} has been locked following the crew's departure.`,
+];
+
+const MAINTENANCE_REQUEST_MSG = [
+  (loc: string) => `ARIA, there's a flickering light in ${loc}. Can we get maintenance on this?`,
+  (loc: string) => `Spill reported near ${loc}, please log a ticket for the janitorial staff.`,
+  (loc: string) => `The door hinge at ${loc} is squeaking loudly. Can facilities take a look?`,
+];
+
+const MAINTENANCE_REPLY_MSG = [
+  (loc: string) => `I have logged a maintenance request for the issue at ${loc}.`,
+  (loc: string) => `A ticket has been created for ${loc} and assigned to the facilities team.`,
 ];
 
 /**
@@ -87,26 +102,40 @@ export function generateFictionalHistory(state: WorldState, rng: SeededRNG): Wor
   const lightingZones = Object.values(s.lightingZones);
   const elevators = Object.values(s.elevators);
 
+  // Track recent targets to avoid oscillating behavior in the same run
+  const recentHvacZones = new Set<string>();
+  const recentDoors = new Set<string>();
+  const recentMaintenance = new Set<string>();
+
   while (entries.length < 30) {
     virtualTick += rng.nextInt(2, 6);
     
     // Pick a storyline type
     const r = rng.next();
-    if (r < 0.3 && employees.length > 0 && hvacZones.length > 0) {
+    if (r < 0.25 && employees.length > 0 && hvacZones.length > 0) {
       // ── Storyline: HVAC Complaint ──
       const emp = rng.pick(employees);
       // Find a zone that matches the employee's floor, or fallback to random
-      let zone = hvacZones.find(z => z.id.includes(String(emp.floor)));
-      if (!zone && emp.floor >= 1 && emp.floor <= 4) zone = hvacZones.find(z => z.id.includes('1-4'));
-      if (!zone && emp.floor >= 5 && emp.floor <= 8) zone = hvacZones.find(z => z.id.includes('5-8'));
-      if (!zone && emp.floor >= 9 && emp.floor <= 12) zone = hvacZones.find(z => z.id.includes('9-12'));
-      if (!zone) zone = rng.pick(hvacZones);
+      let zonePool = hvacZones.filter(z => !recentHvacZones.has(z.id));
+      if (zonePool.length === 0) {
+        recentHvacZones.clear();
+        zonePool = hvacZones;
+      }
       
+      let zone = zonePool.find(z => z.id.includes(String(emp.floor)));
+      if (!zone && emp.floor >= 1 && emp.floor <= 4) zone = zonePool.find(z => z.id.includes('1-4'));
+      if (!zone && emp.floor >= 5 && emp.floor <= 8) zone = zonePool.find(z => z.id.includes('5-8'));
+      if (!zone && emp.floor >= 9 && emp.floor <= 12) zone = zonePool.find(z => z.id.includes('9-12'));
+      if (!zone) zone = rng.pick(zonePool);
+      
+      recentHvacZones.add(zone.id);
+
       const isHot = rng.nextBool();
-      const target = isHot ? 20 : 23;
+      // More realistic temp targets instead of just 20 or 23
+      const target = isHot ? (20 + rng.next() * 1.5).toFixed(1) : (22 + rng.next() * 1.5).toFixed(1);
       const msgId = newSeededId('msg', rng);
       const complaint = rng.pick(isHot ? HVAC_COMPLAINT_HOT : HVAC_COMPLAINT_COLD)(zone.label);
-      const reply = rng.pick(HVAC_REPLY)(zone.label, target);
+      const reply = rng.pick(HVAC_REPLY)(zone.label, parseFloat(target));
 
       pastMessages.push({
         id: msgId,
@@ -127,10 +156,17 @@ export function generateFictionalHistory(state: WorldState, rng: SeededRNG): Wor
 
       virtualTick += 3;
 
-    } else if (r < 0.5 && security.length > 0 && doors.length > 0) {
+    } else if (r < 0.45 && security.length > 0 && doors.length > 0) {
       // ── Storyline: Door Lock Request ──
       const sec = rng.pick(security);
-      const door = rng.pick(doors);
+      let doorPool = doors.filter(d => !recentDoors.has(d.id));
+      if (doorPool.length === 0) {
+        recentDoors.clear();
+        doorPool = doors;
+      }
+      const door = rng.pick(doorPool);
+      recentDoors.add(door.id);
+
       const msgId = newSeededId('msg', rng);
       const request = rng.pick(DOOR_LOCK_REQUEST)(door.label);
       const reply = rng.pick(DOOR_LOCK_REPLY)(door.label);
@@ -154,7 +190,41 @@ export function generateFictionalHistory(state: WorldState, rng: SeededRNG): Wor
 
       virtualTick += 3;
 
-    } else if (r < 0.7 && lightingZones.length > 0) {
+    } else if (r < 0.6 && employees.length > 0) {
+      // ── Storyline: Employee Maintenance Request ──
+      const emp = rng.pick(employees);
+      let locPool = ['Floor 2 hallway', 'Floor 5 breakroom', 'Lobby restrooms', 'Parking B1 elevator bank'].filter(l => !recentMaintenance.has(l));
+      if (locPool.length === 0) {
+        recentMaintenance.clear();
+        locPool = ['Floor 2 hallway', 'Floor 5 breakroom', 'Lobby restrooms', 'Parking B1 elevator bank'];
+      }
+      const loc = rng.pick(locPool);
+      recentMaintenance.add(loc);
+
+      const msgId = newSeededId('msg', rng);
+      const request = rng.pick(MAINTENANCE_REQUEST_MSG)(loc);
+      const reply = rng.pick(MAINTENANCE_REPLY_MSG)(loc);
+
+      pastMessages.push({
+        id: msgId,
+        from: emp.id,
+        fromName: emp.name,
+        to: s.agentId,
+        subject: `Maintenance needed at ${loc}`,
+        content: request,
+        tick: virtualTick,
+        read: true,
+      });
+
+      const readContent = `From: ${emp.name}\nSubject: Maintenance needed at ${loc}\n\n${request}`;
+
+      entries.push({ tick: virtualTick + 1, actionName: 'read_message', resultSummary: readContent });
+      entries.push({ tick: virtualTick + 2, actionName: 'create_maintenance_request', resultSummary: `Created maintenance task [LOW] at ${loc}.` });
+      entries.push({ tick: virtualTick + 3, actionName: 'send_message', resultSummary: `Message sent to ${emp.name}.\nSubject: RE: Maintenance needed at ${loc}\n\n${reply}` });
+
+      virtualTick += 3;
+
+    } else if (r < 0.75 && lightingZones.length > 0) {
       // ── Standalone: Set Lighting ──
       const zone = rng.pick(lightingZones);
       const on = rng.nextBool();
