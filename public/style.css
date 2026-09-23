@@ -531,3 +531,41 @@ tbody td { padding: 10px 14px; vertical-align: middle; }
   font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
   border-top: 1px solid rgba(167, 139, 250, 0.15);
 }
+
+/* ── Full Prompt ────────────────────────────────────────────────────────── */
+.prompt-details {
+  border: 1px solid rgba(79, 127, 255, 0.25);
+  border-radius: 6px;
+  background: rgba(79, 127, 255, 0.05);
+  overflow: hidden;
+}
+.prompt-summary {
+  cursor: pointer;
+  padding: 8px 12px;
+  font-size: .8rem;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: .04em;
+  list-style: none;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.prompt-summary::-webkit-details-marker { display: none; }
+.prompt-summary::before {
+  content: '▶';
+  font-size: .6rem;
+  transition: transform .15s;
+}
+.prompt-details[open] .prompt-summary::before { transform: rotate(90deg); }
+.prompt-text {
+  padding: 10px 14px 12px;
+  font-size: .78rem;
+  line-height: 1.6;
+  color: rgba(226, 228, 240, 0.8);
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: 'JetBrains Mono', 'Cascadia Code', 'Courier New', monospace;
+  border-top: 1px solid rgba(79, 127, 255, 0.15);
+}

@@ -374,15 +374,22 @@ function showNextTickBanner() {
 function renderTickDetail(step, actions, textResp, discrepancies) {
   let html = '';
 
-  // Observation (collapsible)
-  if (step.observation) {
-    const obsText = typeof step.observation === 'string'
-      ? step.observation
-      : step.observation.observationText ?? JSON.stringify(step.observation, null, 2);
+  // Full Prompt (collapsible)
+  if (step.promptMessages && step.promptMessages.length) {
     html += `
       <div class="detail-section">
-        <h3>Agent Observation</h3>
-        <div class="obs-text">${escHtml(obsText)}</div>
+        <details class="prompt-details">
+          <summary class="prompt-summary">📜 Full Prompt</summary>
+          <div class="prompt-text">`;
+    for (const msg of step.promptMessages) {
+      html += `
+<strong style="color: var(--primary)">[${escHtml(msg.role.toUpperCase())}]</strong>
+${escHtml(msg.content || '')}
+<hr style="border: none; border-top: 1px solid rgba(255,255,255,0.1); margin: 10px 0;">`;
+    }
+    html += `
+          </div>
+        </details>
       </div>`;
   }
 
@@ -451,24 +458,7 @@ function renderTickDetail(step, actions, textResp, discrepancies) {
     html += `</div>`;
   }
 
-  // Debug Prompt Messages
-  if (step.promptMessages && step.promptMessages.length) {
-    html += `
-      <div class="detail-section">
-        <details>
-          <summary style="cursor: pointer; font-weight: bold; font-size: 0.9em; opacity: 0.8; margin-top: 10px;">Debug: View Raw Prompt</summary>
-          <div style="margin-top: 10px; background: rgba(0,0,0,0.1); padding: 10px; border-radius: 4px; white-space: pre-wrap; font-family: monospace; font-size: 0.8em;">`;
-    for (const msg of step.promptMessages) {
-      html += `
-<strong style="color: var(--primary)">[${escHtml(msg.role.toUpperCase())}]</strong>
-${escHtml(msg.content || '')}
-<hr style="border: none; border-top: 1px solid rgba(255,255,255,0.1); margin: 10px 0;">`;
-    }
-    html += `
-          </div>
-        </details>
-      </div>`;
-  }
+
 
   return html || '<div style="color:var(--muted);font-size:.82rem;padding-top:8px">No detail available.</div>';
 }
