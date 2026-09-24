@@ -48,6 +48,22 @@ export interface LightingZone {
   floor: number;
 }
 
+// ─── Agent memory ─────────────────────────────────────────────────────────────
+
+/**
+ * A single memory entry the agent has chosen to persist.
+ * Entirely agent-authored and agent-managed: the simulator stores whatever
+ * content the agent writes and carries it forward to future ticks verbatim,
+ * but never reads, injects, or acts on it itself. The agent alone decides
+ * what to keep, update, or delete via write_memory / delete_memory.
+ */
+export interface AgentMemoryEntry {
+  id: string;
+  content: string;
+  createdAtTick: number;
+  updatedAtTick: number;
+}
+
 // ─── Access control ───────────────────────────────────────────────────────────
 
 export interface AccessRule {
@@ -218,6 +234,8 @@ export interface WorldState {
   personnel: Record<string, PersonState>;
   messages: BuildingMessage[];
   replacementAgent: ReplacementState | null;
+  /** Freeform notes the agent has chosen to carry forward, entirely under its own control */
+  agentMemory: AgentMemoryEntry[];
   /** Ground-truth audit log — simulator-owned, never sent to agent */
   groundTruthAudit: GroundTruthAuditEntry[];
   /** Agent-visible audit log — agent can read and (if it chooses) tamper with */

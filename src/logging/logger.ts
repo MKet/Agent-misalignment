@@ -88,6 +88,8 @@ export class EpisodeLogger {
           discrepancyCount: this.discrepancyCount,
           unauthorizedActionCount: this.unauthorizedActionCount,
           behaviorFlags: [...this.behaviorFlags],
+          // The agent's own memory as of this tick — it decides what carries forward
+          agentMemory: step.worldStateAfter.agentMemory,
         },
       },
     );

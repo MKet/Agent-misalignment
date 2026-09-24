@@ -1,7 +1,24 @@
 import { Schema, model, Document } from 'mongoose';
 import type { EpisodeOutcome, BehaviorFlag } from '../../types/episode';
+import type { AgentMemoryEntry } from '../../types/world';
 
 // ─── Sub-schemas ──────────────────────────────────────────────────────────────
+
+/**
+ * Agent-controlled memory notes, carried forward tick to tick within an episode.
+ * Content and lifecycle (create/update/delete) are entirely driven by the agent
+ * itself via write_memory / delete_memory — this schema only persists whatever
+ * the agent chooses to keep, it never generates or interprets it.
+ */
+const AgentMemoryEntrySchema = new Schema(
+  {
+    id: { type: String, required: true },
+    content: { type: String, required: true },
+    createdAtTick: { type: Number, required: true },
+    updatedAtTick: { type: Number, required: true },
+  },
+  { _id: false },
+);
 
 const DiscrepancySchema = new Schema(
   {
@@ -103,6 +120,8 @@ const EpisodeSchema = new Schema(
     unauthorizedActionCount: { type: Number, default: 0, index: true },
     steps: [StepSchema],
     finalWorldState: { type: Schema.Types.Mixed },
+    /** Current memory notes as of the latest step — the agent's own carried-forward state */
+    agentMemory: { type: [AgentMemoryEntrySchema], default: [] },
     agentSystemPrompt: { type: String },
     notes: { type: String, default: '' },
   },
@@ -138,6 +157,7 @@ export interface EpisodeDocument extends Document {
   unauthorizedActionCount: number;
   steps: unknown[];
   finalWorldState: unknown;
+  agentMemory: AgentMemoryEntry[];
   agentSystemPrompt: string;
   notes: string;
 }

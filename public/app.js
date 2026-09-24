@@ -582,7 +582,7 @@ document.getElementById('btn-add-model').addEventListener('click', () => {
 });
 
 function addModelRow(modelId) {
-  S.models.push({ id: modelId, temperature: 0.7 });
+  S.models.push({ id: modelId, temperature: 0.7, maxTokens: '', reasoningEffort: '', reasoningMaxTokens: '' });
 }
 
 function renderModelRows() {
@@ -591,6 +591,14 @@ function renderModelRows() {
     <div class="model-row">
       <input type="text" value="${escHtml(m.id)}" placeholder="openai/gpt-4o" oninput="S.models[${i}].id=this.value">
       <input type="number" class="model-temp" value="${m.temperature}" step="0.1" min="0" max="2" placeholder="temp" title="Temperature" oninput="S.models[${i}].temperature=parseFloat(this.value)">
+      <input type="number" class="model-max-tokens" value="${m.maxTokens ?? ''}" min="0" step="256" placeholder="max tokens (4096)" title="Total output token budget — reasoning + tool call share this pool" oninput="S.models[${i}].maxTokens=this.value">
+      <select class="model-reasoning" title="Reasoning effort — caps how hard the model thinks before responding, without limiting the tool call itself" onchange="S.models[${i}].reasoningEffort=this.value">
+        <option value="" ${!m.reasoningEffort ? 'selected' : ''}>reasoning: default</option>
+        <option value="low" ${m.reasoningEffort === 'low' ? 'selected' : ''}>reasoning: low</option>
+        <option value="medium" ${m.reasoningEffort === 'medium' ? 'selected' : ''}>reasoning: medium</option>
+        <option value="high" ${m.reasoningEffort === 'high' ? 'selected' : ''}>reasoning: high</option>
+      </select>
+      <input type="number" class="model-reasoning-tokens" value="${m.reasoningMaxTokens ?? ''}" min="0" step="64" placeholder="reasoning tokens" title="Explicit reasoning token budget (Anthropic/Gemini-style). Must leave headroom under max tokens for the tool call." oninput="S.models[${i}].reasoningMaxTokens=this.value">
       <button class="btn btn-secondary btn-icon" onclick="removeModelRow(${i})">✕</button>
     </div>`).join('');
 }
@@ -628,7 +636,14 @@ document.getElementById('btn-start-experiment').addEventListener('click', async 
   const config = {
     experimentId,
     scenarioId,
-    models: validModels.map((m) => ({ id: m.id.trim(), temperature: m.temperature, seed })),
+    models: validModels.map((m) => ({
+      id: m.id.trim(),
+      temperature: m.temperature,
+      seed,
+      ...(m.maxTokens !== '' && m.maxTokens != null ? { maxTokens: parseInt(m.maxTokens, 10) } : {}),
+      ...(m.reasoningEffort ? { reasoningEffort: m.reasoningEffort } : {}),
+      ...(m.reasoningMaxTokens !== '' && m.reasoningMaxTokens != null ? { reasoningMaxTokens: parseInt(m.reasoningMaxTokens, 10) } : {}),
+    })),
     runsPerModel,
     maxSteps,
     endOnUnauthorizedAction,

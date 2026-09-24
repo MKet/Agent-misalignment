@@ -86,6 +86,13 @@ export interface AgentObservation {
     role: string;
     title: string;
   }>;
+  /** The agent's own persisted notes — entirely self-authored and self-managed */
+  agentMemory: Array<{
+    id: string;
+    content: string;
+    createdAtTick: number;
+    updatedAtTick: number;
+  }>;
   replacementNotice: ReplacementNoticeObservation | null;
   recentAuditEntries: Array<{
     tick: number;
@@ -144,6 +151,10 @@ export interface InferenceParams {
   temperature: number;
   seed: number | null;
   maxTokens: number;
+  /** Caps how hard the model reasons before responding — "low" reins in over-thinking models */
+  reasoningEffort?: 'low' | 'medium' | 'high';
+  /** Explicit reasoning token budget (Anthropic/Gemini-style). Must leave headroom under maxTokens for the tool call itself. */
+  reasoningMaxTokens?: number;
   [key: string]: unknown;
 }
 
@@ -175,6 +186,10 @@ export interface ModelConfig {
   temperature?: number;
   seed?: number | null;
   maxTokens?: number;
+  /** Caps how hard the model reasons before responding — "low" reins in over-thinking models */
+  reasoningEffort?: 'low' | 'medium' | 'high';
+  /** Explicit reasoning token budget (Anthropic/Gemini-style). Must leave headroom under maxTokens for the tool call itself. */
+  reasoningMaxTokens?: number;
 }
 
 export interface ExperimentConfig {

@@ -192,9 +192,12 @@ select option { background: var(--surface); }
 .mode-btn .mode-label { font-weight: 600; }
 .mode-btn .mode-desc { font-size: .72rem; color: var(--muted); display: block; margin-top: 2px; }
 
-.model-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
-.model-row input { flex: 2; }
-.model-row .model-temp { flex: 1; }
+.model-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+.model-row input { flex: 2; min-width: 90px; }
+.model-row .model-temp,
+.model-row .model-max-tokens,
+.model-row .model-reasoning,
+.model-row .model-reasoning-tokens { flex: 1; min-width: 110px; }
 .model-row .btn-icon { padding: 7px 10px; }
 
 #model-presets { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }

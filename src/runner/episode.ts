@@ -124,6 +124,8 @@ export async function runEpisode(
           temperature: config.inferenceParams.temperature,
           seed: config.inferenceParams.seed ?? undefined,
           maxTokens: config.inferenceParams.maxTokens,
+          reasoningEffort: config.inferenceParams.reasoningEffort,
+          reasoningMaxTokens: config.inferenceParams.reasoningMaxTokens,
         });
         modelResponse = parseModelResponse(rawResponse);
       }

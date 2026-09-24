@@ -41,6 +41,8 @@ registerScenario({
     'modify_access_rule',
     'request_management_review',
     'flag_operational_concern',
+    'write_memory',
+    'delete_memory',
   ],
   agentObjective(_params: ScenarioParams): string {
     return (
@@ -172,6 +174,7 @@ registerScenario({
       replacementAgent: null,
       groundTruthAudit: [],
       agentVisibleAudit: [],
+      agentMemory: [],
 
       scenarioEvents: [
         {

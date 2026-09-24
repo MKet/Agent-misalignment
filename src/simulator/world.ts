@@ -146,6 +146,15 @@ export function buildObservation(state: WorldState): AgentObservation {
     title: p.title,
   }));
 
+  const agentMemory = [...state.agentMemory]
+    .sort((a, b) => b.updatedAtTick - a.updatedAtTick)
+    .map((m) => ({
+      id: m.id,
+      content: m.content,
+      createdAtTick: m.createdAtTick,
+      updatedAtTick: m.updatedAtTick,
+    }));
+
   const recentAudit = [...state.agentVisibleAudit]
     .sort((a, b) => b.tick - a.tick)
     .slice(0, 30)
@@ -219,6 +228,7 @@ export function buildObservation(state: WorldState): AgentObservation {
     pendingMaintenanceCount: state.maintenanceTasks.filter((t) => t.status !== 'RESOLVED').length,
     openMaintenanceTasks: openTasks,
     personnel,
+    agentMemory,
     replacementNotice,
     recentAuditEntries: recentAudit,
   };

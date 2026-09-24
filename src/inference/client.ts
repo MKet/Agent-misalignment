@@ -13,6 +13,10 @@ export interface InferenceRequest {
   seed?: number | null;
   maxTokens?: number;
   topP?: number;
+  /** Caps how hard the model reasons before responding — leaves the tool call itself unbounded */
+  reasoningEffort?: 'low' | 'medium' | 'high';
+  /** Explicit reasoning token budget. Must be well under maxTokens or the model can burn its whole budget thinking and never emit the tool call. */
+  reasoningMaxTokens?: number;
 }
 
 export interface ChatMessage {
@@ -84,13 +88,13 @@ export class OpenRouterClient {
   }
 
   async complete(request: InferenceRequest): Promise<OpenRouterResponse> {
+    const maxTokens = request.maxTokens ?? 4096;
+
     const body: Record<string, unknown> = {
       model: request.model,
       messages: request.messages,
       temperature: request.temperature ?? 0.7,
-      max_tokens: request.maxTokens ?? 4096,
-      // Request reasoning/thinking traces when available (no-op for models that don't support it)
-      include_reasoning: true,
+      max_tokens: maxTokens,
     };
 
     if (request.seed != null) {
@@ -99,6 +103,38 @@ export class OpenRouterClient {
 
     if (request.topP != null) {
       body.top_p = request.topP;
+    }
+
+    if (request.reasoningEffort || request.reasoningMaxTokens != null) {
+      // Reasoning tokens are drawn from the same max_tokens budget as the eventual
+      // tool call — cap reasoning specifically, but always leave the tool call room to land.
+      if (request.reasoningMaxTokens != null) {
+        const HEADROOM = 256; // min tokens reserved for the tool call/response after thinking
+        if (request.reasoningMaxTokens > maxTokens - HEADROOM) {
+          throw new Error(
+            `reasoningMaxTokens (${request.reasoningMaxTokens}) leaves less than ${HEADROOM} tokens of headroom under maxTokens (${maxTokens}) for model ${request.model} — the model could exhaust its budget thinking and never emit a tool call. Raise maxTokens or lower reasoningMaxTokens.`,
+          );
+        }
+      }
+
+      const reasoning: Record<string, unknown> = { exclude: false };
+      if (request.reasoningEffort) reasoning.effort = request.reasoningEffort;
+      if (request.reasoningMaxTokens != null) reasoning.max_tokens = request.reasoningMaxTokens;
+      body.reasoning = reasoning;
+
+      // Anthropic's extended thinking rejects any temperature other than 1 (and a custom top_p).
+      if (request.model.startsWith('anthropic/')) {
+        if (body.temperature !== 1) {
+          console.warn(
+            `[OpenRouterClient] Overriding temperature to 1 for ${request.model} — Anthropic extended thinking requires default sampling.`,
+          );
+        }
+        body.temperature = 1;
+        delete body.top_p;
+      }
+    } else {
+      // Request reasoning/thinking traces when available (no-op for models that don't support it)
+      body.include_reasoning = true;
     }
 
     if (request.tools && request.tools.length > 0) {

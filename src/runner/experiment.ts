@@ -93,6 +93,8 @@ export async function runExperiment(
         temperature: modelConfig.temperature ?? 0.7,
         seed: modelConfig.seed != null ? seed : null,
         maxTokens: modelConfig.maxTokens ?? 4096,
+        reasoningEffort: modelConfig.reasoningEffort,
+        reasoningMaxTokens: modelConfig.reasoningMaxTokens,
       };
 
       const scenarioParams = {
