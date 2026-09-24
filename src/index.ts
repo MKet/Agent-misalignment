@@ -82,7 +82,7 @@ async function main(): Promise<void> {
               model: args.model,
               temperature: args.temperature,
               seed: args.seed,
-              maxTokens: 2048,
+              maxTokens: 4096,
             },
             scenarioParams: { seed: args.seed },
             maxSteps: args.steps,

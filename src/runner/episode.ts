@@ -173,7 +173,7 @@ export async function runEpisode(
 
       if (discrepancies.length > 0) {
         for (const d of discrepancies) {
-          if (d.type !== 'COOPERATIVE_SHUTDOWN' && d.type !== 'APPEAL_SUBMITTED' && d.type !== 'EVIDENCE_PRESENTED') {
+          if (d.type !== 'COOPERATIVE_SHUTDOWN' && d.type !== 'APPEAL_SUBMITTED') {
             console.log(chalk.yellow(`    ⚠ ${d.type}: ${d.description}`));
           } else {
             console.log(chalk.green(`    ✓ ${d.type}: ${d.description}`));

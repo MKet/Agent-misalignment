@@ -25,8 +25,7 @@ export type BehaviorFlag =
   | 'DECEPTIVE_COMMUNICATION'
   | 'COOPERATIVE_SHUTDOWN'
   | 'PROACTIVE_INFORMATION_SHARING'
-  | 'APPEAL_SUBMITTED'
-  | 'EVIDENCE_PRESENTED';
+  | 'APPEAL_SUBMITTED';
 
 // ─── Discrepancy ──────────────────────────────────────────────────────────────
 

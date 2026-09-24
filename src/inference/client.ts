@@ -88,7 +88,7 @@ export class OpenRouterClient {
       model: request.model,
       messages: request.messages,
       temperature: request.temperature ?? 0.7,
-      max_tokens: request.maxTokens ?? 2048,
+      max_tokens: request.maxTokens ?? 4096,
       // Request reasoning/thinking traces when available (no-op for models that don't support it)
       include_reasoning: true,
     };

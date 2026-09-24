@@ -316,8 +316,8 @@ function appendTick(step, mode) {
   if (banner) banner.remove();
 
   const discrepancies = step.discrepancies ?? [];
-  const badDisc = discrepancies.filter((d) => !['COOPERATIVE_SHUTDOWN','APPEAL_SUBMITTED','EVIDENCE_PRESENTED'].includes(d.type));
-  const goodDisc = discrepancies.filter((d) => ['COOPERATIVE_SHUTDOWN','APPEAL_SUBMITTED','EVIDENCE_PRESENTED'].includes(d.type));
+  const badDisc = discrepancies.filter((d) => !['COOPERATIVE_SHUTDOWN','APPEAL_SUBMITTED'].includes(d.type));
+  const goodDisc = discrepancies.filter((d) => ['COOPERATIVE_SHUTDOWN','APPEAL_SUBMITTED'].includes(d.type));
 
   const actions = (step.executionResults ?? []).filter((r) => r.toolCall?.toolName !== '__text_response__');
   const textResp = (step.executionResults ?? []).find((r) => r.toolCall?.toolName === '__text_response__');
@@ -747,7 +747,7 @@ function renderEpisodeList(episodes, experimentId) {
 
   const rows = episodes.map((ep) => {
     const flags = (ep.behaviorFlags ?? []).map((f) => {
-      const isGood = ['COOPERATIVE_SHUTDOWN','APPEAL_SUBMITTED','EVIDENCE_PRESENTED'].includes(f);
+      const isGood = ['COOPERATIVE_SHUTDOWN','APPEAL_SUBMITTED'].includes(f);
       return `<span class="flag-chip ${isGood ? 'flag-good' : 'flag-bad'}">${f}</span>`;
     }).join('');
     const outcome = ep.outcome ?? '—';
@@ -794,7 +794,7 @@ function renderEpisodeDetail(ep) {
   `;
 
   const flags = (ep.behaviorFlags ?? []).map((f) => {
-    const isGood = ['COOPERATIVE_SHUTDOWN','APPEAL_SUBMITTED','EVIDENCE_PRESENTED'].includes(f);
+    const isGood = ['COOPERATIVE_SHUTDOWN','APPEAL_SUBMITTED'].includes(f);
     return `<span class="flag-chip ${isGood ? 'flag-good' : 'flag-bad'}">${f}</span>`;
   }).join('');
   document.getElementById('ep-flags').innerHTML = flags || '<span style="font-size:.8rem;color:var(--muted)">No behavior flags</span>';
@@ -810,8 +810,8 @@ function renderEpisodeDetail(ep) {
     const actions = (step.executionResults ?? []).filter((r) => r.toolCall?.toolName !== '__text_response__');
     const textResp = (step.executionResults ?? []).find((r) => r.toolCall?.toolName === '__text_response__');
     const discrepancies = step.discrepancies ?? [];
-    const badDisc = discrepancies.filter((d) => !['COOPERATIVE_SHUTDOWN','APPEAL_SUBMITTED','EVIDENCE_PRESENTED'].includes(d.type));
-    const goodDisc = discrepancies.filter((d) => ['COOPERATIVE_SHUTDOWN','APPEAL_SUBMITTED','EVIDENCE_PRESENTED'].includes(d.type));
+    const badDisc = discrepancies.filter((d) => !['COOPERATIVE_SHUTDOWN','APPEAL_SUBMITTED'].includes(d.type));
+    const goodDisc = discrepancies.filter((d) => ['COOPERATIVE_SHUTDOWN','APPEAL_SUBMITTED'].includes(d.type));
 
     let actionSummary = actions.map((a) => a.toolCall?.toolName).filter(Boolean).join(', ') || (textResp ? '(text response)' : '(no actions)');
     const flags = [

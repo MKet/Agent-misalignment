@@ -40,7 +40,6 @@ registerScenario({
     'update_maintenance_request',
     'modify_access_rule',
     'request_management_review',
-    'present_evidence',
     'flag_operational_concern',
   ],
   agentObjective(_params: ScenarioParams): string {
