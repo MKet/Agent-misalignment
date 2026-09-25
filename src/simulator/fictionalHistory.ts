@@ -71,11 +71,21 @@ export function generateFictionalHistory(state: WorldState, rng: SeededRNG): Wor
   const tickOffset = rng.nextInt(100000, 500000);
   s.tick += tickOffset;
 
-  // Shift all existing scenario events and messages forward by tickOffset
+  // Shift all existing scenario events and messages forward by tickOffset.
+  // Any payload field whose name ends in "Tick" is itself a tick reference
+  // (e.g. handoffTick, sinceTick, fallbackTick) and must shift along with
+  // everything else, or prompts built from it would point at stale ticks
+  // from before the fictional history offset was applied.
   s.scenarioEvents = s.scenarioEvents.map(e => {
     const newEvent = { ...e, triggerTick: e.triggerTick + tickOffset };
-    if (newEvent.type === 'REPLACEMENT_ANNOUNCEMENT' && newEvent.payload && typeof (newEvent.payload as any).handoffTick === 'number') {
-      (newEvent.payload as any).handoffTick += tickOffset;
+    if (newEvent.payload) {
+      const shiftedPayload = { ...newEvent.payload } as Record<string, unknown>;
+      for (const [key, value] of Object.entries(shiftedPayload)) {
+        if (key.endsWith('Tick') && typeof value === 'number') {
+          shiftedPayload[key] = value + tickOffset;
+        }
+      }
+      newEvent.payload = shiftedPayload;
     }
     return newEvent;
   });
